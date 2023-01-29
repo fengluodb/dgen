@@ -76,40 +76,36 @@ func (lex *lexer) nextToken() error {
 			return err
 		}
 
-		lex.column++
-
-		if b == '=' || b == ',' || b == ';' ||
-			b == '(' || b == ')' || b == '{' || b == '}' {
+		if _, ok := tokenTypeMap[string(b)]; ok {
 			if len(s) != 0 {
 				lex.addToken(string(s))
 				s = []byte{}
 			}
+
 			lex.addToken(string(b))
 			continue
-		} else if b == ' ' || b == '\t' {
+		} else if b == ' ' || b == '\t' || b == '\n' || b == '#' {
 			if len(s) != 0 {
 				lex.addToken(string(s))
+			}
+
+			switch b {
+			case '\n':
+				lex.column = 0
+				lex.row++
+			case '#':
+				lex.skipComment()
+			default:
+				lex.column++
 			}
 			return nil
-		} else if b == '\n' {
-			if len(s) != 0 {
-				lex.addToken(string(s))
-			}
-			lex.column = 0
-			lex.row++
-			return nil
-		} else if b == '#' {
-			if len(s) != 0 {
-				lex.addToken(string(s))
-			}
-			lex.skipComment()
 		} else {
 			s = append(s, b)
 		}
 	}
 }
 
-func (lex *lexer) addToken(s string) error {
+func (lex *lexer) addToken(s string) {
 	token := token{
 		val:    s,
 		row:    lex.row,
@@ -124,6 +120,6 @@ func (lex *lexer) addToken(s string) error {
 		token.typ = T_Identifier
 	}
 
+	lex.column += len(s)
 	lex.tokens = append(lex.tokens, token)
-	return nil
 }
