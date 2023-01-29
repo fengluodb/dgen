@@ -23,21 +23,11 @@ func NewLexer(rd io.Reader) *lexer {
 }
 
 func (lex *lexer) Scan() error {
-	for {
-		if err := lex.skipWhitespace(); err != nil {
-			if err == io.EOF {
-				return nil
-			}
-			return err
-		}
-
-		if err := lex.nextToken(); err != nil {
-			if err == io.EOF {
-				return nil
-			}
-			return err
-		}
+	err := lex.scanToken()
+	if err == io.EOF {
+		return nil
 	}
+	return err
 }
 
 func (lex *lexer) skipComment() error {
@@ -48,27 +38,7 @@ func (lex *lexer) skipComment() error {
 	return err
 }
 
-func (lex *lexer) skipWhitespace() error {
-	for {
-		b, err := lex.buf.Peek(1)
-		if err != nil {
-			return err
-		}
-
-		if b[0] == ' ' || b[0] == '\t' {
-			lex.buf.ReadByte()
-			lex.column++
-		} else if b[0] == '\n' {
-			lex.buf.ReadByte()
-			lex.column = 0
-			lex.row++
-		} else {
-			return nil
-		}
-	}
-}
-
-func (lex *lexer) nextToken() error {
+func (lex *lexer) scanToken() error {
 	s := []byte{}
 	for {
 		b, err := lex.buf.ReadByte()
@@ -81,14 +51,12 @@ func (lex *lexer) nextToken() error {
 				lex.addToken(string(s))
 				s = []byte{}
 			}
-
 			lex.addToken(string(b))
-			continue
 		} else if b == ' ' || b == '\t' || b == '\n' || b == '#' {
 			if len(s) != 0 {
 				lex.addToken(string(s))
+				s = []byte{}
 			}
-
 			switch b {
 			case '\n':
 				lex.column = 0
@@ -98,7 +66,6 @@ func (lex *lexer) nextToken() error {
 			default:
 				lex.column++
 			}
-			return nil
 		} else {
 			s = append(s, b)
 		}
