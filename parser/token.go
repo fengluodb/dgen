@@ -31,9 +31,11 @@ type token struct {
 }
 
 var tokenTypeMap map[string]tokenType
+var ignoreCharMap map[byte]struct{}
 
 func init() {
 	tokenTypeMap = make(map[string]tokenType)
+	ignoreCharMap = make(map[byte]struct{})
 
 	tokenTypeMap["uint8"] = T_Builtin
 	tokenTypeMap["uint16"] = T_Builtin
@@ -61,6 +63,11 @@ func init() {
 	tokenTypeMap["}"] = T_RCurlyBracket
 	tokenTypeMap[","] = T_Comma
 	tokenTypeMap[";"] = T_Semicolon
+
+	ignoreCharMap[' '] = struct{}{}
+	ignoreCharMap['\t'] = struct{}{}
+	ignoreCharMap['\n'] = struct{}{}
+	ignoreCharMap['#'] = struct{}{}
 }
 
 func isNum(s string) bool {

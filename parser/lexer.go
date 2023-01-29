@@ -52,7 +52,7 @@ func (lex *lexer) scanToken() error {
 				s = []byte{}
 			}
 			lex.addToken(string(b))
-		} else if b == ' ' || b == '\t' || b == '\n' || b == '#' {
+		} else if _, ok := ignoreCharMap[b]; ok {
 			if len(s) != 0 {
 				lex.addToken(string(s))
 				s = []byte{}
