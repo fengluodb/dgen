@@ -17,6 +17,8 @@ const (
 	T_Assign                         // =
 	T_LSmallBracket                  // (
 	T_RSmallBracket                  // )
+	T_LBracket                       // [
+	T_RBracket                       // ]
 	T_LCurlyBracket                  // {
 	T_RCurlyBracket                  // }
 	T_Comma                          // ,
@@ -59,6 +61,8 @@ func init() {
 	tokenTypeMap["="] = T_Assign
 	tokenTypeMap["("] = T_LSmallBracket
 	tokenTypeMap[")"] = T_RSmallBracket
+	tokenTypeMap["["] = T_LBracket
+	tokenTypeMap["]"] = T_RBracket
 	tokenTypeMap["{"] = T_LCurlyBracket
 	tokenTypeMap["}"] = T_RCurlyBracket
 	tokenTypeMap[","] = T_Comma
@@ -71,7 +75,7 @@ func init() {
 }
 
 func isNum(s string) bool {
-	_, err := strconv.ParseInt(s, 10, 64)
+	_, err := strconv.Atoi(s)
 
 	return err == nil
 }

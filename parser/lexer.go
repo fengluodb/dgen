@@ -15,10 +15,7 @@ type lexer struct {
 
 func NewLexer(rd io.Reader) *lexer {
 	return &lexer{
-		row:    0,
-		column: 0,
-		buf:    bufio.NewReader(rd),
-		tokens: []token{},
+		buf: bufio.NewReader(rd),
 	}
 }
 
