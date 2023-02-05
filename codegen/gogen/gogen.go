@@ -10,7 +10,6 @@ import (
 
 	"dgen/config"
 	"dgen/parser"
-	"dgen/utils"
 )
 
 type Gogen struct {
@@ -172,59 +171,10 @@ func (g *Gogen) genJsonSerializerFunction(w io.Writer) error {
 }
 
 func (g *Gogen) genService(w io.Writer) error {
-	// s := ""
-	// for _, service := range g.parser.ServiceStats {
-	// 	s += fmt.Sprintf("type %s interface{\n", service.Name)
-	// 	for _, m := range service.Members {
-	// 		s += fmt.Sprintf("\t%s(*%s, *%s) error\n", m.Name, m.Req, m.Resp)
-	// 	}
-	// 	s += "}\n\n"
-	// 	s += g.genServiceHandler(service)
-	// }
-	// return s
 	return serviceTmpl.Execute(w, g.parser)
 }
 
-func (g *Gogen) genServiceHandler(service *parser.ServiceStat) string {
-	// s := fmt.Sprintf("type %sHandler interface{\n", service.Name)
-	// for _, m := range service.Members {
-	// 	s += fmt.Sprintf("\t%s(req []byte) (data []byte, err error)\n", m.Name)
-	// }
-	// s += "}\n\n"
-
-	s := fmt.Sprintf("type %sHandler struct {\n", utils.FirstLower(service.Name))
-	s += fmt.Sprintf("\t%s %s\n", utils.FirstLower(service.Name), service.Name)
-	s += "}\n\n"
-
-	for _, m := range service.Members {
-		s += fmt.Sprintf("func (h *%sHandler) %sHandler(req []byte) (data []byte, err error) {\n", utils.FirstLower(service.Name), m.Name)
-		s += fmt.Sprintf("\targs := new(%s)\n", m.Req)
-		s += "\t if err := args.Unmarshal(req); err != nil {\n"
-		s += "\t\treturn nil, err"
-		s += "}\n\n"
-		s += fmt.Sprintf("\treply := new(%s)\n\n", m.Resp)
-		s += fmt.Sprintf("\tif err := h.%s.%s(args, reply); err != nil {\n", utils.FirstLower(service.Name), m.Name)
-		s += "\t\treturn nil, err\n"
-		s += "\t}\n"
-		s += "\treturn reply.Marshal()\n"
-		s += "}\n\n"
-	}
-	return s
-}
-
 func (g *Gogen) genRegisterFunc(w io.Writer) error {
-	// s := ""
-	// for _, service := range g.parser.ServiceStats {
-	// 	s += fmt.Sprintf("func Register%sService(s *drpc.Server, serviceName string, %s %s) {\n", service.Name, utils.FirstLower(service.Name), service.Name)
-	// 	s += fmt.Sprintf("\t%sHandler := &%sHandler{\n", utils.FirstLower(service.Name), utils.FirstLower(service.Name))
-	// 	s += fmt.Sprintf("\t\t%s:%s,\n", utils.FirstLower(service.Name), utils.FirstLower(service.Name))
-	// 	s += "\t}\n"
-	// 	for _, m := range service.Members {
-	// 		s += fmt.Sprintf("\tdrpc.RegisterService(s, serviceName+\".%s\", %sHandler.%sHandler)\n", m.Name, utils.FirstLower(service.Name), m.Name)
-	// 	}
-	// 	s += "}\n\n"
-	// }
-	// return s
 	if err := registerTmpl.Execute(w, g.parser); err != nil {
 		return err
 	}
