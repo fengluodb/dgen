@@ -1,38 +1,38 @@
 package parser
 
-type enumStat struct {
-	name    string
-	members []string
+type EnumStat struct {
+	Name    string
+	Members []string
 }
 
-type messageStat struct {
-	name    string
-	members []messageMember
+type MessageStat struct {
+	Name    string
+	Members []*MessageMember
 }
 
-type messageMember struct {
-	seq      int
-	optional bool
-	typ      interface{}
-	name     string
+type MessageMember struct {
+	Seq      int
+	Optional bool
+	Type     interface{}
+	Name     string
 }
 
-type serviceStat struct {
-	name    string
-	members []serviceMember
+type ServiceStat struct {
+	Name    string
+	Members []ServiceMember
 }
 
-type serviceMember struct {
-	name string
-	req  string
-	resp string
+type ServiceMember struct {
+	Name string
+	Req  string
+	Resp string
 }
 
-type mapType struct {
-	key string
-	val interface{}
+type MapType struct {
+	Key string
+	Val interface{}
 }
 
-type listType struct {
-	ele interface{}
+type ListType struct {
+	Ele interface{}
 }

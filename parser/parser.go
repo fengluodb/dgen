@@ -1,15 +1,16 @@
 package parser
 
 import (
+	"dgen/utils"
 	"fmt"
 	"io"
 	"strconv"
 )
 
 type Parser struct {
-	EnumStats    []enumStat
-	MessageStats []messageStat
-	ServiceStats []serviceStat
+	EnumStats    []*EnumStat
+	MessageStats []*MessageStat
+	ServiceStats []*ServiceStat
 
 	lexer *lexer
 	cur   int // 目前解析到的token数
@@ -52,13 +53,13 @@ func (p *Parser) Parse() error {
 
 func (p *Parser) parseEnum() error {
 	tokens := p.lexer.tokens
-	es := enumStat{}
+	es := &EnumStat{}
 
 	token := tokens[p.cur]
 	if token.typ != T_Identifier || p.cur >= len(tokens) {
 		return fmt.Errorf("raw:%d, column:%d is invalid grammar", token.row, token.column)
 	}
-	es.name = token.val
+	es.Name = token.val
 	p.cur++
 
 	token = tokens[p.cur]
@@ -72,7 +73,7 @@ func (p *Parser) parseEnum() error {
 		if token.typ != T_Identifier {
 			break
 		}
-		es.members = append(es.members, token.val)
+		es.Members = append(es.Members, utils.FirstUpper(token.val))
 		p.cur++
 
 		token = tokens[p.cur]
@@ -94,13 +95,13 @@ func (p *Parser) parseEnum() error {
 
 func (p *Parser) parseMessage() error {
 	tokens := p.lexer.tokens
-	ms := messageStat{}
+	ms := &MessageStat{}
 
 	token := tokens[p.cur]
 	if token.typ != T_Identifier || p.cur >= len(tokens) {
 		return fmt.Errorf("raw:%d, column:%d is invalid grammar", token.row, token.column)
 	}
-	ms.name = token.val
+	ms.Name = utils.FirstUpper(token.val)
 	p.cur++
 
 	token = tokens[p.cur]
@@ -110,7 +111,7 @@ func (p *Parser) parseMessage() error {
 	p.cur++
 
 	for p.cur < len(tokens) {
-		m := messageMember{}
+		m := &MessageMember{}
 
 		token := tokens[p.cur]
 		if token.typ == T_RCurlyBracket {
@@ -119,7 +120,7 @@ func (p *Parser) parseMessage() error {
 		}
 		if token.typ == T_Optional {
 			p.cur++
-			m.optional = true
+			m.Optional = true
 			token = tokens[p.cur]
 		}
 		if token.typ != T_Seq {
@@ -137,12 +138,12 @@ func (p *Parser) parseMessage() error {
 		if token.typ != T_Num {
 			return fmt.Errorf("raw:%d, column:%d is invalid grammar", token.row, token.column)
 		}
-		m.seq, _ = strconv.Atoi(token.val)
+		m.Seq, _ = strconv.Atoi(token.val)
 		p.cur++
 
 		token = tokens[p.cur]
 		typ, err := p.parseType()
-		m.typ = typ
+		m.Type = typ
 		if err != nil {
 			return err
 		}
@@ -151,7 +152,7 @@ func (p *Parser) parseMessage() error {
 		if token.typ != T_Identifier {
 			return fmt.Errorf("raw:%d, column:%d is invalid grammar", token.row, token.column)
 		}
-		m.name = token.val
+		m.Name = utils.FirstUpper(token.val)
 		p.cur++
 
 		token = tokens[p.cur]
@@ -160,7 +161,7 @@ func (p *Parser) parseMessage() error {
 		}
 		p.cur++
 
-		ms.members = append(ms.members, m)
+		ms.Members = append(ms.Members, m)
 	}
 
 	p.MessageStats = append(p.MessageStats, ms)
@@ -169,13 +170,13 @@ func (p *Parser) parseMessage() error {
 
 func (p *Parser) parseService() error {
 	tokens := p.lexer.tokens
-	ss := serviceStat{}
+	ss := &ServiceStat{}
 
 	token := tokens[p.cur]
 	if token.typ != T_Identifier || p.cur >= len(tokens) {
 		return fmt.Errorf("raw:%d, column:%d is invalid grammar", token.row, token.column)
 	}
-	ss.name = token.val
+	ss.Name = token.val
 	p.cur++
 
 	token = tokens[p.cur]
@@ -185,7 +186,7 @@ func (p *Parser) parseService() error {
 	p.cur++
 
 	for p.cur < len(tokens) {
-		m := serviceMember{}
+		m := ServiceMember{}
 
 		token = tokens[p.cur]
 		if token.typ == T_RCurlyBracket {
@@ -195,7 +196,7 @@ func (p *Parser) parseService() error {
 		if token.typ != T_Identifier {
 			return fmt.Errorf("raw:%d, column:%d is invalid grammar", token.row, token.column)
 		}
-		m.name = token.val
+		m.Name = token.val
 		p.cur++
 
 		token = tokens[p.cur]
@@ -208,7 +209,7 @@ func (p *Parser) parseService() error {
 		if token.typ != T_Identifier {
 			return fmt.Errorf("raw:%d, column:%d is invalid grammar", token.row, token.column)
 		}
-		m.req = token.val
+		m.Req = token.val
 		p.cur++
 
 		token = tokens[p.cur]
@@ -231,7 +232,7 @@ func (p *Parser) parseService() error {
 			if token.typ != T_Identifier {
 				return fmt.Errorf("raw:%d, column:%d is invalid grammar", token.row, token.column)
 			}
-			m.resp = token.val
+			m.Resp = token.val
 			p.cur++
 
 			token = tokens[p.cur]
@@ -247,7 +248,7 @@ func (p *Parser) parseService() error {
 		}
 		p.cur++
 
-		ss.members = append(ss.members, m)
+		ss.Members = append(ss.Members, m)
 	}
 
 	p.ServiceStats = append(p.ServiceStats, ss)
@@ -277,7 +278,7 @@ func (p *Parser) parseType() (interface{}, error) {
 
 func (p *Parser) parseMap() (interface{}, error) {
 	tokens := p.lexer.tokens
-	m := mapType{}
+	m := MapType{}
 
 	token := tokens[p.cur]
 	if token.typ != T_LBracket {
@@ -289,17 +290,11 @@ func (p *Parser) parseMap() (interface{}, error) {
 	if token.typ != T_Builtin || token.val == "map" || token.val == "list" {
 		return nil, fmt.Errorf("raw:%d, column:%d is invalid grammar", token.row, token.column)
 	}
-	m.key = token.val
+	m.Key = token.val
 	p.cur++
 
 	token = tokens[p.cur]
 	if token.typ != T_RBracket {
-		return nil, fmt.Errorf("raw:%d, column:%d is invalid grammar", token.row, token.column)
-	}
-	p.cur++
-
-	token = tokens[p.cur]
-	if token.typ != T_LBracket {
 		return nil, fmt.Errorf("raw:%d, column:%d is invalid grammar", token.row, token.column)
 	}
 	p.cur++
@@ -309,20 +304,14 @@ func (p *Parser) parseMap() (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	m.val = typ
-
-	token = tokens[p.cur]
-	if token.typ != T_RBracket {
-		return nil, fmt.Errorf("raw:%d, column:%d is invalid grammar", token.row, token.column)
-	}
-	p.cur++
+	m.Val = typ
 
 	return m, nil
 }
 
 func (p *Parser) parseList() (interface{}, error) {
 	tokens := p.lexer.tokens
-	l := listType{}
+	l := ListType{}
 
 	token := tokens[p.cur]
 	if token.typ != T_LBracket {
@@ -335,7 +324,7 @@ func (p *Parser) parseList() (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	l.ele = typ
+	l.Ele = typ
 
 	token = tokens[p.cur]
 	if token.typ != T_RBracket {
