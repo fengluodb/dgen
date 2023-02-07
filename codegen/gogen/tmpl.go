@@ -72,7 +72,7 @@ const _serviceTmpl = `
 {{- range .ServiceStats}}
 type {{.Name}} interface {
 	{{- range .Members}}
-	{{.Name}}(*{{.Req}}, *{{.Resp}}) error
+	{{.Name}}(*{{.Req}} {{- if ne .Resp ""}}, *{{.Resp}} {{- end}}) error
 	{{- end}}
 }
 
@@ -85,24 +85,22 @@ type {{.Name}}Handler interface {
 type {{.Name}}Complement struct {
 	{{.Name}} {{.Name}}
 }
-
-{{$name := .Name}}
-{{- range .Members -}}
+{{- $name := .Name}}
+{{ range .Members }}
 func (c *{{$name}}Complement) {{.Name}}Handler(req []byte) (data []byte, err error) {
 	args := new({{.Req}})
 	if err := args.Unmarshal(req); err != nil {
 		return nil, err
 	}
-
-	reply := new({{.Resp}})
-	if err := c.{{$name}}.{{.Name}}(args, reply); err != nil {
+	{{if ne .Resp ""}}
+	reply := new({{.Resp}}){{ end }}
+	if err := c.{{$name}}.{{.Name}}(args{{- if ne .Resp ""}}, reply {{- end}}); err != nil {
 		return nil, err
 	}
-	return reply.Marshal()
+	{{if ne .Resp ""}}return reply.Marshal(){{else}}return nil, nil{{end}}
 }
 {{end}}
-
-{{- end }}
+{{- end -}}
 `
 
 const _registerTmpl = `
