@@ -47,6 +47,16 @@ const(
 	{{- end}}
 	{{- end}}
 )
+
+func (x *{{.Name}}) Marshal() ([]byte, error) {
+	return MarshalUint32(uint32(*x)), nil
+}
+
+func (x *{{.Name}}) Unmarshal(data []byte) error {
+	v := binary.LittleEndian.Uint32(data)
+	*x = {{.Name}}(v)
+	return nil
+}
 {{end -}}
 `
 
