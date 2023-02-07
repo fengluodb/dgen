@@ -138,7 +138,11 @@ func (p *Parser) parseMessage() error {
 		if token.typ != T_Num {
 			return fmt.Errorf("raw:%d, column:%d is invalid grammar", token.row, token.column)
 		}
-		m.Seq, _ = strconv.Atoi(token.val)
+		seq, err := strconv.Atoi(token.val)
+		if err != nil {
+			return fmt.Errorf("raw:%d, column:%d is invalid seq", token.row, token.column)
+		}
+		m.Seq = uint8(seq)
 		p.cur++
 
 		token = tokens[p.cur]

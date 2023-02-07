@@ -11,7 +11,7 @@ type MessageStat struct {
 }
 
 type MessageMember struct {
-	Seq      int
+	Seq      uint8
 	Optional bool
 	Type     interface{}
 	Name     string

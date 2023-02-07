@@ -28,7 +28,7 @@ type structStats struct {
 }
 
 type structMember struct {
-	Seq      int
+	Seq      uint8
 	Optional bool
 	Type     string
 	Name     string
@@ -42,16 +42,17 @@ func Gen(config *config.CodegenConfig) error {
 	return gogen.Gen()
 }
 
-func NewGogen(filename string, outputDir string, encode string) (*Gogen, error) {
-	f, err := os.Open(filename)
+func NewGogen(filepath string, outputDir string, encode string) (*Gogen, error) {
+	f, err := os.Open(filepath)
 	if err != nil {
 		return nil, err
 	}
 
-	name := strings.Split(filename, ".")[0]
+	_, filename := path.Split(filepath)
+	filename = strings.Split(filename, ".")[0]
 	return &Gogen{
-		Name:       name,
-		Output:     path.Join(outputDir, name),
+		Name:       filename,
+		Output:     path.Join(outputDir, filename),
 		parser:     parser.NewParser(f),
 		EncodeType: encode,
 		StructMap:  make(map[string]struct{}),
@@ -159,17 +160,6 @@ func (g *Gogen) genStruct(w io.Writer) error {
 	return nil
 }
 
-func (g *Gogen) genSerializerFunction(w io.Writer) error {
-	if g.EncodeType == "json" {
-		return g.genJsonSerializerFunction(w)
-	}
-	return nil
-}
-
-func (g *Gogen) genJsonSerializerFunction(w io.Writer) error {
-	return jsonSerializerTmpl.Execute(w, g.parser)
-}
-
 func (g *Gogen) genService(w io.Writer) error {
 	return serviceTmpl.Execute(w, g.parser)
 }
@@ -195,7 +185,7 @@ func (g *Gogen) convertType() {
 			sm := &structMember{
 				Seq:      m.Seq,
 				Optional: m.Optional,
-				Type:     getType(m.Type),
+				Type:     g.getType(m.Type),
 				Name:     m.Name,
 			}
 			// if type is a struct, we use the pointer of the struct
@@ -208,36 +198,39 @@ func (g *Gogen) convertType() {
 	}
 }
 
-func getType(v interface{}) string {
+func (g *Gogen) getType(v interface{}) string {
 	mapVal, ok := v.(parser.MapType)
 	if ok {
-		return getMap(mapVal)
+		return g.getMap(mapVal)
 	}
 
 	listVal, ok := v.(parser.ListType)
 	if ok {
-		return getList(listVal)
+		return g.getList(listVal)
 	}
 
 	stringVal, ok := v.(string)
 	if ok {
+		if _, ok := g.StructMap[stringVal]; ok {
+			stringVal = "*" + stringVal
+		}
 		return stringVal
 	}
 
 	return ""
 }
 
-func getMap(val parser.MapType) string {
+func (g *Gogen) getMap(val parser.MapType) string {
 	s := ""
 	s += fmt.Sprintf("map[%s]", val.Key)
-	s += getType(val.Val)
+	s += g.getType(val.Val)
 
 	return s
 }
 
-func getList(val parser.ListType) string {
+func (g *Gogen) getList(val parser.ListType) string {
 	s := "[]"
-	s += getType(val.Ele)
+	s += g.getType(val.Ele)
 
 	return s
 }
