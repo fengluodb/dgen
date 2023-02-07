@@ -41,9 +41,18 @@ service Greeter {
 }
 ```
 
+## 安装方法
+**从源码编译安装**：
+```
+git clone https://github.com/fengluodb/dgen.git
+cd dgen
+sh build.sh
+```
+即可生成名为dgen的可执行文件。
+
 ## 使用方法
 ```
-Usage of hgen:
+Usage of dgen:
     -e string 
         the serialization method of message (default "", represent adopt the project's default serialization method, optional "json")
     -f string
