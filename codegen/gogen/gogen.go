@@ -150,6 +150,11 @@ func (g *Gogen) genEnum(w io.Writer) error {
 	if err := enumTmpl.Execute(w, g.parser); err != nil {
 		return err
 	}
+	if g.EncodeType != "json" {
+		if err := enumSerializationTmpl.Execute(w, g.parser); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

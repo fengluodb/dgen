@@ -6,6 +6,7 @@ var (
 	header1Tmpl           = must(_header1Tmpl)
 	header2Tmpl           = must(_header2Tmpl)
 	enumTmpl              = must(_enumTmpl)
+	enumSerializationTmpl = must(_enumSerializationTmpl)
 	structTmpl            = must(_structTmpl)
 	serviceTmpl           = must(_serviceTmpl)
 	registerTmpl          = must(_registerTmpl)
@@ -39,6 +40,11 @@ import "github.com/fengluodb/drpc"
 const _enumTmpl = `
 {{- range .EnumStats}}
 type {{.Name}} uint32
+{{end -}}
+`
+
+const _enumSerializationTmpl = `
+{{- range .EnumStats}}
 {{$name := .Name}}
 const(
 	{{- range $i,$v:=.Members}}
