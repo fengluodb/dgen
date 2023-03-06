@@ -62,3 +62,38 @@ Usage of dgen:
     -l string
     	the target languege the IDL will be compliled
 ```
+
+## 压测
+除了对比default编码和json编码外，还引入了golang的rpc标准库和grpc-go框架来进行横向的对比.
+
+测试案例选择简单的Add服务(两数相加)
+```protobuf
+message MathRequest {
+    seq=1 int32 A;
+    seq=2 int32 B;
+}
+
+message MathReply {
+    seq=1 int32 C;
+}
+
+service Math {
+    Add(MathRequest) return (MathReply);
+}
+```
+
+> 所有测试在两台配置相同的主机上进行，一台作为服务端，一台作为客户端。采用reply-response同步请求方式，在未获取请求的响应之前，不允许再发送下一个请求。所有案例测试多次，取平均值。
+
+测试环境：
++ 系统：Ubuntu 20.04
++ 终端利用 `ulimit -n 65535` 命令，将允许打开的文件描述符改为最大
++ CPU：Intel i5-10500f
++ 内存：32GB
+
+### 单用户单连接
+不同框架在单用户单连接下的最大吞吐率：
+![](./assets/single.png)
+
+### 单用户多连接
+不同框架在不同并发客户端数据下的吞吐率, 每个连接发送1000个请求：
+![](./assets/concurrency.png)
